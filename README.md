@@ -156,7 +156,7 @@ flutter test
   automaticamente, com fundo de maior contraste no escuro para uso
   outdoor.
 
-## Decisões de escopo
+## O que ficou pendente / o que faria com mais tempo
 
 O desafio pede, explicitamente, fluxo completo e bem estruturado em vez
 de muita feature pela metade. Priorizei nessa ordem: (1) 100% do escopo
