@@ -136,18 +136,31 @@ cd mobile
 flutter test
 ```
 
-21 testes de BLoC/serviço cobrindo o que mais pesa na avaliação:
+32 testes de BLoC/serviço/widget cobrindo o que mais pesa na avaliação:
 
 - **`SyncService`** (`test/features/sync/sync_service_test.dart`): sucesso
   marca `synced` com `serverId`; falha marca `failed` com a mensagem de
   erro; rascunhos nunca são enviados; um item `failed` volta a ser
   tentado no próximo `syncAll()`; `retry(id)` afeta só o item alvo.
 - **`InspectionFormBloc`**: validação de "Concluir inspeção" (observação
-  ≥ 10 caracteres, foto obrigatória, localização obrigatória), "Salvar
-  rascunho" sem essas exigências, e o alerta de geofence.
+  ≥ mínimo do schema, foto obrigatória, localização obrigatória), "Salvar
+  rascunho" sem essas exigências, o alerta de geofence, e a aplicação do
+  form-schema dinâmico (labels/opções/mínimo de caracteres).
 - **`AuthBloc`**: restauração de sessão, login (sucesso/falha), logout.
 - **`HistoryBloc`**: carregamento a partir do banco local, filtro por
   status, sync manual e retry disparando o `SyncService` corretamente.
+- **`WorkOrdersBloc`**: refresh bem-sucedido, falha com cache vazio,
+  e o comportamento cache-first (mantém os itens já cacheados na tela
+  quando um refresh subsequente falha — ex. ficou offline).
+- **Widget tests da lista de OS**: os quatro estados de UI (carregando,
+  erro com retry, vazio, lista preenchida com os rótulos em pt-BR).
+
+### CI
+
+`.github/workflows/ci.yml` roda `flutter analyze` + `flutter test` a
+cada push/PR na `master`. Não precisa do mock-api nem de emulador — os
+32 testes são puramente unitários/BLoC (banco Drift em memória, `ApiClient`
+mockado com `mocktail`).
 
 ## Outras funcionalidades implementadas
 
@@ -157,15 +170,28 @@ flutter test
 - **Dark mode**: `ThemeMode.system` — segue o tema do aparelho
   automaticamente, com fundo de maior contraste no escuro para uso
   outdoor.
+- **Formulário dinâmico via `form-schema`**: o formulário de inspeção
+  busca `GET /work-orders/:id/form-schema` e usa os rótulos, o mínimo
+  de caracteres da observação e as opções de condição vindos da API,
+  em vez de fixos no código. A busca nunca bloqueia o formulário — se
+  falhar (ex. offline), os valores padrão de hoje continuam valendo
+  sem nenhuma diferença visível. `condition` continua opcional na UI
+  mesmo o schema marcando como obrigatório, porque o contrato de
+  `POST /inspections` trata esse campo como opcional.
+- **Continuar rascunho**: a tela da OS lista as inspeções locais já
+  feitas para ela, com um botão para reabrir e editar um rascunho em
+  vez de sempre criar um registro novo.
+- **CI**: GitHub Actions rodando `flutter analyze` + `flutter test` em
+  todo push/PR (veja a seção Testes).
 
 ## O que ficou pendente / o que faria com mais tempo
 
 O desafio pede, explicitamente, fluxo completo e bem estruturado em vez
 de muita feature pela metade. Priorizei nessa ordem: (1) 100% do escopo
-obrigatório com testes, (2) os itens de escopo desejável mais alinhados
-ao perfil da vaga — BLoC, geofence, dark mode. Alguns itens do escopo
-desejável/opcional ficaram fora por decisão consciente, não por falta
-de tempo:
+obrigatório com testes, (2) os itens de escopo desejável/opcional mais
+alinhados ao perfil da vaga — BLoC, geofence, dark mode, form-schema
+dinâmico, CI. Dois itens do escopo desejável ficaram fora por decisão
+consciente, não por falta de tempo:
 
 - **Sem Freezed/codegen de modelos**: `User` e `WorkOrder` são classes
   simples com `fromJson`/`Equatable`. Evita um segundo gerador de
@@ -175,17 +201,8 @@ de tempo:
   troca entre `LoginPage` e `HomeShell` conforme o `AuthBloc` cobre o
   requisito de bloqueio de rota sem token com bem menos configuração
   do que um router declarativo.
-- **Campos fixos em vez de dinâmicos via `form-schema`**: o mock expõe
-  `GET /work-orders/:id/form-schema`; os campos fixos do formulário já
-  cobrem exatamente esse schema (observação, condição, foto,
-  localização), então a camada dinâmica não mudaria o comportamento.
 - **Fila de sync trata falha de rede e erro de validação do servidor
   da mesma forma** (`failed`, reprocessado automaticamente no próximo
   `syncAll()` ou ao reconectar). Decisão deliberada: garante que nada
   se perde e tudo é retentado, ao custo de não diferenciar a causa raiz
   na UI — dá pra refinar isso mantendo o mesmo modelo de dados.
-- **Próximo passo natural do repositório**: CI (GitHub Actions rodando
-  `flutter analyze` + `flutter test` a cada push) e testes de
-  `WorkOrdersBloc`/widget tests, complementando os 21 testes já
-  cobrindo a modelagem offline/sync (o critério de maior peso na
-  avaliação).
