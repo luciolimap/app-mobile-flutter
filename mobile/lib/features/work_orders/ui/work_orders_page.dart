@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../shared/work_order_priority_label.dart';
+import '../../../shared/work_order_status_label.dart';
 import '../../inspection/ui/work_order_detail_page.dart';
 import '../bloc/work_orders_bloc.dart';
 import '../data/work_order.dart';
@@ -76,19 +78,6 @@ class _WorkOrderCard extends StatelessWidget {
     }
   }
 
-  String _statusLabel() {
-    switch (workOrder.status) {
-      case 'open':
-        return 'Aberta';
-      case 'in_progress':
-        return 'Em andamento';
-      case 'done':
-        return 'Concluída';
-      default:
-        return workOrder.status;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -118,7 +107,7 @@ class _WorkOrderCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      workOrder.priority.toUpperCase(),
+                      workOrderPriorityLabel(workOrder.priority),
                       style: TextStyle(
                         color: _priorityColor(context),
                         fontSize: 11,
@@ -143,7 +132,7 @@ class _WorkOrderCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Chip(
-                label: Text(_statusLabel()),
+                label: Text(workOrderStatusLabel(workOrder.status)),
                 visualDensity: VisualDensity.compact,
               ),
             ],
