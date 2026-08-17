@@ -1,5 +1,7 @@
 # Orbytis — Desafio Técnico Mobile: Mini App de Inspeção de Campo
 
+[![CI](https://github.com/luciolimap/app-mobile-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/luciolimap/app-mobile-flutter/actions/workflows/ci.yml)
+
 App Flutter (Android) para um técnico de campo: login, lista de ordens de
 serviço, formulário de inspeção (texto + foto + GPS), persistência local
 com fila de sincronização e histórico com status.
