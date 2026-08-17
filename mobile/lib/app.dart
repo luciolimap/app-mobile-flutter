@@ -8,6 +8,7 @@ import 'core/storage/token_storage.dart';
 import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/ui/login_page.dart';
+import 'features/inspection/data/form_schema_repository.dart';
 import 'features/inspection/data/inspection_repository.dart';
 import 'features/sync/sync_service.dart';
 import 'features/work_orders/data/work_orders_repository.dart';
@@ -24,6 +25,10 @@ class App extends StatelessWidget {
         RepositoryProvider(
           create: (context) =>
               ApiClient(tokenStorage: context.read<TokenStorage>()),
+        ),
+        RepositoryProvider(
+          create: (context) =>
+              FormSchemaRepository(apiClient: context.read<ApiClient>()),
         ),
         RepositoryProvider(create: (_) => AppDatabase()),
         RepositoryProvider(create: (_) => ConnectivityService()),

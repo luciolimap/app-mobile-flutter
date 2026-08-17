@@ -8,6 +8,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/location_service.dart';
 import '../../sync/sync_service.dart';
+import '../data/form_schema.dart';
+import '../data/form_schema_repository.dart';
 import '../data/inspection_repository.dart';
 
 part 'inspection_form_event.dart';
@@ -21,10 +23,12 @@ class InspectionFormBloc extends Bloc<InspectionFormEvent, InspectionFormState> 
     required InspectionRepository repository,
     required SyncService syncService,
     this.existingDraft,
+    FormSchemaRepository? schemaRepository,
     LocationService? locationService,
     ImagePicker? imagePicker,
   })  : _repository = repository,
         _syncService = syncService,
+        _schemaRepository = schemaRepository,
         _locationService = locationService ?? LocationService(),
         _imagePicker = imagePicker ?? ImagePicker(),
         super(existingDraft == null
@@ -48,6 +52,7 @@ class InspectionFormBloc extends Bloc<InspectionFormEvent, InspectionFormState> 
         (event, emit) => emit(state.copyWith(condition: event.value)));
     on<InspectionPhotoRequested>(_onPhotoRequested);
     on<InspectionLocationRequested>(_onLocationRequested);
+    on<InspectionSchemaRequested>(_onSchemaRequested);
     on<InspectionSaveDraftPressed>(_onSaveDraftPressed);
     on<InspectionCompletePressed>(_onCompletePressed);
   }
@@ -58,8 +63,21 @@ class InspectionFormBloc extends Bloc<InspectionFormEvent, InspectionFormState> 
   final InspectionRow? existingDraft;
   final InspectionRepository _repository;
   final SyncService _syncService;
+  final FormSchemaRepository? _schemaRepository;
   final LocationService _locationService;
   final ImagePicker _imagePicker;
+
+  Future<void> _onSchemaRequested(
+    InspectionSchemaRequested event,
+    Emitter<InspectionFormState> emit,
+  ) async {
+    final repository = _schemaRepository;
+    if (repository == null) return;
+    final schema = await repository.fetch(workOrderId);
+    if (schema != null) {
+      emit(state.copyWith(schema: schema));
+    }
+  }
 
   Future<void> _onPhotoRequested(
     InspectionPhotoRequested event,
@@ -145,9 +163,10 @@ class InspectionFormBloc extends Bloc<InspectionFormEvent, InspectionFormState> 
     InspectionCompletePressed event,
     Emitter<InspectionFormState> emit,
   ) async {
-    if (state.observation.trim().length < 10) {
+    if (state.observation.trim().length < state.minObservationLength) {
       emit(state.copyWith(
-        errorMessage: 'A observação precisa ter ao menos 10 caracteres.',
+        errorMessage:
+            'A observação precisa ter ao menos ${state.minObservationLength} caracteres.',
       ));
       return;
     }

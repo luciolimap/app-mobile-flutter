@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:mobile/core/services/location_service.dart';
 import 'package:mobile/features/inspection/bloc/inspection_form_bloc.dart';
+import 'package:mobile/features/inspection/data/form_schema.dart';
+import 'package:mobile/features/inspection/data/form_schema_repository.dart';
 import 'package:mobile/features/inspection/data/inspection_repository.dart';
 import 'package:mobile/features/sync/sync_service.dart';
 import 'package:mocktail/mocktail.dart';
@@ -12,6 +14,8 @@ class _MockInspectionRepository extends Mock implements InspectionRepository {}
 class _MockSyncService extends Mock implements SyncService {}
 
 class _MockLocationService extends Mock implements LocationService {}
+
+class _MockFormSchemaRepository extends Mock implements FormSchemaRepository {}
 
 void main() {
   late _MockInspectionRepository repository;
@@ -211,6 +215,83 @@ void main() {
         isA<InspectionFormState>()
             .having((s) => s.isFarFromWorkOrder, 'isFarFromWorkOrder', true),
       ],
+    );
+  });
+
+  group('InspectionSchemaRequested', () {
+    blocTest<InspectionFormBloc, InspectionFormState>(
+      'is a no-op and keeps the default fields when there is no schema repository',
+      build: buildBloc,
+      act: (bloc) => bloc.add(const InspectionSchemaRequested()),
+      expect: () => [],
+      verify: (bloc) {
+        expect(bloc.state.schema, isNull);
+        expect(bloc.state.minObservationLength, 10);
+        expect(bloc.state.conditionOptions, ['bom', 'regular', 'ruim', 'crítico']);
+      },
+    );
+
+    blocTest<InspectionFormBloc, InspectionFormState>(
+      'applies the fetched schema (labels, min length, condition options)',
+      build: () {
+        final schemaRepository = _MockFormSchemaRepository();
+        when(() => schemaRepository.fetch(workOrderId)).thenAnswer(
+          (_) async => const InspectionFormSchema(
+            workOrderId: workOrderId,
+            fields: [
+              InspectionFormFieldSpec(
+                key: 'observation',
+                type: 'text',
+                label: 'Observação da inspeção',
+                required: true,
+                minLength: 20,
+              ),
+              InspectionFormFieldSpec(
+                key: 'condition',
+                type: 'select',
+                label: 'Estado do ativo',
+                required: true,
+                options: ['ótimo', 'ruim'],
+              ),
+            ],
+          ),
+        );
+        return InspectionFormBloc(
+          workOrderId: workOrderId,
+          workOrderLatitude: workOrderLat,
+          workOrderLongitude: workOrderLng,
+          repository: repository,
+          syncService: syncService,
+          locationService: locationService,
+          schemaRepository: schemaRepository,
+        );
+      },
+      act: (bloc) => bloc.add(const InspectionSchemaRequested()),
+      expect: () => [
+        isA<InspectionFormState>()
+            .having((s) => s.minObservationLength, 'minObservationLength', 20)
+            .having((s) => s.conditionOptions, 'conditionOptions', ['ótimo', 'ruim']),
+      ],
+    );
+
+    blocTest<InspectionFormBloc, InspectionFormState>(
+      'keeps the default fields when the schema fetch fails (e.g. offline)',
+      build: () {
+        final schemaRepository = _MockFormSchemaRepository();
+        when(() => schemaRepository.fetch(workOrderId)).thenAnswer((_) async => null);
+        return InspectionFormBloc(
+          workOrderId: workOrderId,
+          workOrderLatitude: workOrderLat,
+          workOrderLongitude: workOrderLng,
+          repository: repository,
+          syncService: syncService,
+          locationService: locationService,
+          schemaRepository: schemaRepository,
+        );
+      },
+      act: (bloc) => bloc.add(const InspectionSchemaRequested()),
+      expect: () => [],
+      verify: (bloc) => expect(bloc.state.schema, isNull),
     );
   });
 }

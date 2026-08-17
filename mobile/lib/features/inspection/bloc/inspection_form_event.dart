@@ -35,6 +35,13 @@ class InspectionLocationRequested extends InspectionFormEvent {
   const InspectionLocationRequested();
 }
 
+/// Fetches the dynamic form schema for this work order (opcional scope).
+/// Never gates the form: on failure (e.g. offline) [InspectionFormState]
+/// simply keeps its default fields.
+class InspectionSchemaRequested extends InspectionFormEvent {
+  const InspectionSchemaRequested();
+}
+
 class InspectionSaveDraftPressed extends InspectionFormEvent {
   const InspectionSaveDraftPressed();
 }

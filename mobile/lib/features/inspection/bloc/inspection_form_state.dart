@@ -15,6 +15,7 @@ class InspectionFormState extends Equatable {
     this.errorMessage,
     this.saveResult = InspectionSaveResult.none,
     this.distanceFromWorkOrderMeters,
+    this.schema,
   });
 
   final String observation;
@@ -29,14 +30,26 @@ class InspectionFormState extends Equatable {
   final InspectionSaveResult saveResult;
   final double? distanceFromWorkOrderMeters;
 
+  /// Dynamic field definitions fetched from `GET
+  /// /work-orders/:id/form-schema` (opcional scope). Null until it loads
+  /// (or if the fetch failed, e.g. offline) — the form always renders a
+  /// sensible default in that case, this never gates the form.
+  final InspectionFormSchema? schema;
+
   bool get hasLocation => latitude != null && longitude != null;
   bool get hasPhoto => photoPath != null;
 
   static const geofenceRadiusMeters = 200;
+  static const _defaultConditionOptions = ['bom', 'regular', 'ruim', 'crítico'];
 
   bool get isFarFromWorkOrder =>
       distanceFromWorkOrderMeters != null &&
       distanceFromWorkOrderMeters! > geofenceRadiusMeters;
+
+  int get minObservationLength => schema?.fieldFor('observation')?.minLength ?? 10;
+
+  List<String> get conditionOptions =>
+      schema?.fieldFor('condition')?.options ?? _defaultConditionOptions;
 
   InspectionFormState copyWith({
     String? observation,
@@ -51,6 +64,7 @@ class InspectionFormState extends Equatable {
     bool clearError = false,
     InspectionSaveResult? saveResult,
     double? distanceFromWorkOrderMeters,
+    InspectionFormSchema? schema,
   }) {
     return InspectionFormState(
       observation: observation ?? this.observation,
@@ -65,6 +79,7 @@ class InspectionFormState extends Equatable {
       saveResult: saveResult ?? this.saveResult,
       distanceFromWorkOrderMeters:
           distanceFromWorkOrderMeters ?? this.distanceFromWorkOrderMeters,
+      schema: schema ?? this.schema,
     );
   }
 
@@ -81,5 +96,6 @@ class InspectionFormState extends Equatable {
         errorMessage,
         saveResult,
         distanceFromWorkOrderMeters,
+        schema,
       ];
 }
