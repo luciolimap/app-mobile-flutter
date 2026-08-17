@@ -40,10 +40,22 @@ flutter run
 ```
 
 A base URL da API está fixa em `lib/core/api/api_client.dart`
-(`kApiBaseUrl`). Por padrão aponta para `http://10.0.2.2:3000`, o alias
-que o **emulador Android** usa para acessar o `localhost` da máquina
-host. Se for testar em **dispositivo físico** na mesma rede, troque para
-o IP local da máquina (ex.: `http://192.168.0.10:3000`).
+(`kApiBaseUrl`). Por padrão aponta para `http://127.0.0.1:3000` (o
+`localhost` do próprio dispositivo), pensado para **dispositivo físico**
+com:
+
+```bash
+adb reverse tcp:3000 tcp:3000
+```
+
+Esse comando encaminha o `localhost:3000` do celular para o
+`localhost:3000` da máquina, através da própria conexão ADB (USB ou
+sem fio) — funciona mesmo quando o roteador isola tráfego entre Wi-Fi
+e cabo (isolamento de AP), que foi o caso aqui durante os testes.
+
+Se for testar no **emulador Android** em vez de dispositivo físico,
+troque `kApiBaseUrl` para `http://10.0.2.2:3000` (o alias que o
+emulador usa para acessar o `localhost` do host).
 
 ## Arquitetura
 
