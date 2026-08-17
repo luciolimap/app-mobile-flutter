@@ -5,11 +5,15 @@ import 'api_exception.dart';
 
 /// Base URL for the mock API.
 ///
-/// `10.0.2.2` is the special alias the Android emulator uses to reach
-/// `localhost` on the host machine. For a physical device on the same
-/// Wi-Fi network, replace this with the host machine's LAN IP
-/// (e.g. `http://192.168.0.10:3000`) — see the README.
-const String kApiBaseUrl = 'http://10.0.2.2:3000';
+/// Points at the device's own `localhost`. For the Android emulator,
+/// `10.0.2.2` is the special alias that reaches the host machine
+/// directly. For a **physical device**, run:
+///   `adb reverse tcp:3000 tcp:3000`
+/// which forwards the device's localhost:3000 to the host machine
+/// through the existing ADB connection (USB or wireless) — this works
+/// even when the phone and PC can't otherwise reach each other over
+/// the LAN (e.g. router client/AP isolation). See the README.
+const String kApiBaseUrl = 'http://127.0.0.1:3000';
 
 /// Thin wrapper around Dio: attaches the bearer token to every request
 /// (except login) and normalizes errors into [ApiException].
