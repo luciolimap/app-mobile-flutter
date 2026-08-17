@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/database/app_database.dart';
 import '../../sync/sync_service.dart';
 import '../bloc/inspection_form_bloc.dart';
+import '../data/form_schema_repository.dart';
 import '../data/inspection_repository.dart';
 
 class InspectionFormPage extends StatelessWidget {
@@ -25,8 +26,6 @@ class InspectionFormPage extends StatelessWidget {
   final double workOrderLongitude;
   final InspectionRow? existingDraft;
 
-  static const _conditions = ['bom', 'regular', 'ruim', 'crítico'];
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -37,7 +36,8 @@ class InspectionFormPage extends StatelessWidget {
         existingDraft: existingDraft,
         repository: context.read<InspectionRepository>(),
         syncService: context.read<SyncService>(),
-      ),
+        schemaRepository: context.read<FormSchemaRepository>(),
+      )..add(const InspectionSchemaRequested()),
       child: Scaffold(
         appBar: AppBar(
           title: Text(existingDraft == null
@@ -75,22 +75,29 @@ class InspectionFormPage extends StatelessWidget {
                   initialValue: state.observation,
                   minLines: 3,
                   maxLines: 6,
-                  decoration: const InputDecoration(
-                    labelText: 'Observação',
-                    hintText: 'Descreva o que foi encontrado (mín. 10 caracteres)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: state.schema?.fieldFor('observation')?.label ?? 'Observação',
+                    hintText:
+                        'Descreva o que foi encontrado (mín. ${state.minObservationLength} caracteres)',
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (value) =>
                       bloc.add(InspectionObservationChanged(value)),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  initialValue: state.condition,
-                  decoration: const InputDecoration(
-                    labelText: 'Condição do ativo (opcional)',
-                    border: OutlineInputBorder(),
+                  // Guards against DropdownButtonFormField's hard assert
+                  // if a resumed draft's saved value isn't in the current
+                  // (possibly schema-driven) option list.
+                  initialValue: state.conditionOptions.contains(state.condition)
+                      ? state.condition
+                      : null,
+                  decoration: InputDecoration(
+                    labelText:
+                        '${state.schema?.fieldFor('condition')?.label ?? 'Condição do ativo'} (opcional)',
+                    border: const OutlineInputBorder(),
                   ),
-                  items: _conditions
+                  items: state.conditionOptions
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
                   onChanged: (value) =>
@@ -98,7 +105,7 @@ class InspectionFormPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 _SectionCard(
-                  title: 'Foto da evidência',
+                  title: state.schema?.fieldFor('photo')?.label ?? 'Foto da evidência',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -145,7 +152,7 @@ class InspectionFormPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
-                  title: 'Localização',
+                  title: state.schema?.fieldFor('location')?.label ?? 'Localização',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
