@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../../core/services/location_service.dart';
 import '../../sync/sync_service.dart';
 import '../data/inspection_repository.dart';
@@ -19,13 +20,28 @@ class InspectionFormBloc extends Bloc<InspectionFormEvent, InspectionFormState> 
     required this.workOrderLongitude,
     required InspectionRepository repository,
     required SyncService syncService,
+    this.existingDraft,
     LocationService? locationService,
     ImagePicker? imagePicker,
   })  : _repository = repository,
         _syncService = syncService,
         _locationService = locationService ?? LocationService(),
         _imagePicker = imagePicker ?? ImagePicker(),
-        super(const InspectionFormState()) {
+        super(existingDraft == null
+            ? const InspectionFormState()
+            : InspectionFormState(
+                observation: existingDraft.observation,
+                condition: existingDraft.condition,
+                photoPath: (existingDraft.photoPath?.isEmpty ?? true)
+                    ? null
+                    : existingDraft.photoPath,
+                latitude: existingDraft.latitude == 0 && existingDraft.longitude == 0
+                    ? null
+                    : existingDraft.latitude,
+                longitude: existingDraft.latitude == 0 && existingDraft.longitude == 0
+                    ? null
+                    : existingDraft.longitude,
+              )) {
     on<InspectionObservationChanged>((event, emit) =>
         emit(state.copyWith(observation: event.value, clearError: true)));
     on<InspectionConditionChanged>(
@@ -39,6 +55,7 @@ class InspectionFormBloc extends Bloc<InspectionFormEvent, InspectionFormState> 
   final String workOrderId;
   final double workOrderLatitude;
   final double workOrderLongitude;
+  final InspectionRow? existingDraft;
   final InspectionRepository _repository;
   final SyncService _syncService;
   final LocationService _locationService;
@@ -116,6 +133,7 @@ class InspectionFormBloc extends Bloc<InspectionFormEvent, InspectionFormState> 
       longitude: state.longitude ?? 0,
       capturedAt: DateTime.now(),
       asDraft: true,
+      existing: existingDraft,
     );
     emit(state.copyWith(
       isSaving: false,
@@ -152,6 +170,7 @@ class InspectionFormBloc extends Bloc<InspectionFormEvent, InspectionFormState> 
       longitude: state.longitude!,
       capturedAt: DateTime.now(),
       asDraft: false,
+      existing: existingDraft,
     );
     emit(state.copyWith(
       isSaving: false,

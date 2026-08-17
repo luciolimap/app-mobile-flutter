@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../shared/inspection_status_visual.dart';
 import '../bloc/history_bloc.dart';
 
 class HistoryPage extends StatelessWidget {
@@ -88,24 +89,9 @@ class _InspectionCard extends StatelessWidget {
 
   final InspectionRow item;
 
-  (Color, IconData, String) _statusVisual() {
-    switch (item.status) {
-      case InspectionStatus.draft:
-        return (Colors.grey, Icons.edit_note, 'Rascunho');
-      case InspectionStatus.pending:
-        return (Colors.orange, Icons.hourglass_top, 'Pendente');
-      case InspectionStatus.synced:
-        return (Colors.green, Icons.check_circle, 'Sincronizada');
-      case InspectionStatus.failed:
-        return (Colors.red, Icons.error, 'Falhou');
-      default:
-        return (Colors.grey, Icons.help_outline, item.status);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final (color, icon, label) = _statusVisual();
+    final (color, icon, label) = inspectionStatusVisual(item.status);
     final formattedDate =
         DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(item.createdAt).toLocal());
 

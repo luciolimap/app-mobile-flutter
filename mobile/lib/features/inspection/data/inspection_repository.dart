@@ -28,6 +28,9 @@ class InspectionRepository {
     return destPath;
   }
 
+  /// Creates a new local inspection, or — when [existing] is provided —
+  /// updates that draft in place (same `clientId`) instead of creating a
+  /// duplicate entry every time the user resumes and re-saves it.
   Future<void> saveInspection({
     required String workOrderId,
     required String observation,
@@ -37,7 +40,21 @@ class InspectionRepository {
     required double longitude,
     required DateTime capturedAt,
     required bool asDraft,
+    InspectionRow? existing,
   }) async {
+    final status = asDraft ? InspectionStatus.draft : InspectionStatus.pending;
+    if (existing != null) {
+      await _database.updateInspection(existing.copyWith(
+        observation: observation,
+        condition: Value(condition),
+        photoPath: Value(photoPath),
+        latitude: latitude,
+        longitude: longitude,
+        capturedAt: capturedAt.toIso8601String(),
+        status: status,
+      ));
+      return;
+    }
     await _database.insertInspection(InspectionsCompanion.insert(
       clientId: _uuid.v4(),
       workOrderId: workOrderId,
@@ -47,7 +64,7 @@ class InspectionRepository {
       latitude: latitude,
       longitude: longitude,
       capturedAt: capturedAt.toIso8601String(),
-      status: asDraft ? InspectionStatus.draft : InspectionStatus.pending,
+      status: status,
       createdAt: DateTime.now().toIso8601String(),
     ));
   }

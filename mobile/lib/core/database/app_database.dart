@@ -87,6 +87,13 @@ class AppDatabase extends _$AppDatabase {
     return query.watch();
   }
 
+  Stream<List<InspectionRow>> watchInspectionsForWorkOrder(String workOrderId) {
+    final query = select(inspections)
+      ..where((t) => t.workOrderId.equals(workOrderId))
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    return query.watch();
+  }
+
   Future<List<InspectionRow>> pendingOrFailedInspections() {
     final query = select(inspections)
       ..where((t) =>

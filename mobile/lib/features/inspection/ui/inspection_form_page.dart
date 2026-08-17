@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../sync/sync_service.dart';
 import '../bloc/inspection_form_bloc.dart';
 import '../data/inspection_repository.dart';
@@ -15,12 +16,14 @@ class InspectionFormPage extends StatelessWidget {
     required this.workOrderTitle,
     required this.workOrderLatitude,
     required this.workOrderLongitude,
+    this.existingDraft,
   });
 
   final String workOrderId;
   final String workOrderTitle;
   final double workOrderLatitude;
   final double workOrderLongitude;
+  final InspectionRow? existingDraft;
 
   static const _conditions = ['bom', 'regular', 'ruim', 'crítico'];
 
@@ -31,11 +34,16 @@ class InspectionFormPage extends StatelessWidget {
         workOrderId: workOrderId,
         workOrderLatitude: workOrderLatitude,
         workOrderLongitude: workOrderLongitude,
+        existingDraft: existingDraft,
         repository: context.read<InspectionRepository>(),
         syncService: context.read<SyncService>(),
       ),
       child: Scaffold(
-        appBar: AppBar(title: Text('Inspeção — $workOrderTitle')),
+        appBar: AppBar(
+          title: Text(existingDraft == null
+              ? 'Inspeção — $workOrderTitle'
+              : 'Continuar rascunho — $workOrderTitle'),
+        ),
         body: BlocConsumer<InspectionFormBloc, InspectionFormState>(
           listener: (context, state) {
             if (state.errorMessage != null) {
@@ -59,10 +67,12 @@ class InspectionFormPage extends StatelessWidget {
           },
           builder: (context, state) {
             final bloc = context.read<InspectionFormBloc>();
-            return ListView(
+            return SafeArea(
+              child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 TextFormField(
+                  initialValue: state.observation,
                   minLines: 3,
                   maxLines: 6,
                   decoration: const InputDecoration(
@@ -207,6 +217,7 @@ class InspectionFormPage extends StatelessWidget {
                   ],
                 ),
               ],
+              ),
             );
           },
         ),
