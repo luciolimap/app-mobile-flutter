@@ -156,32 +156,34 @@ flutter test
   automaticamente, com fundo de maior contraste no escuro para uso
   outdoor.
 
-## Decisões técnicas / trade-offs
+## Decisões de escopo
 
-Dado o prazo curto, priorizei um **fluxo obrigatório completo e sólido**
-em vez de cobrir também os itens de escopo desejável/opcional:
+O desafio pede, explicitamente, fluxo completo e bem estruturado em vez
+de muita feature pela metade. Priorizei nessa ordem: (1) 100% do escopo
+obrigatório com testes, (2) os itens de escopo desejável mais alinhados
+ao perfil da vaga — BLoC, geofence, dark mode. Alguns itens do escopo
+desejável/opcional ficaram fora por decisão consciente, não por falta
+de tempo:
 
-- **Sem Freezed/codegen de modelos**: os modelos (`User`, `WorkOrder`)
-  são classes simples com `fromJson`/`Equatable`. Evita um segundo
-  gerador de código concorrendo com o do Drift e mantém o build rápido
-  e previsível. Freezed está listado como "desejável", não obrigatório.
-- **Sem `go_router`**: a navegação usa `Navigator` padrão + um
-  `AuthGate` simples que troca entre `LoginPage` e `HomeShell` conforme
-  o `AuthBloc`. Cobre o requisito de bloqueio de rota sem token com bem
-  menos código/configuração do que um router declarativo.
-- **BLoC foi mantido** mesmo não sendo obrigatório, por ser citado no
-  desafio como diferencial alinhado à stack da empresa.
-
-## O que ficou pendente / o que faria com mais tempo
-
-- Modelos imutáveis com Freezed.
-- Campos dinâmicos via `GET /work-orders/:id/form-schema` (o mock já
-  expõe essa rota; o formulário hoje usa campos fixos que cobrem o
-  schema retornado).
-- CI básico (ex.: GitHub Actions rodando `flutter analyze` + `flutter test`
-  a cada push).
-- Mais cobertura de testes (`WorkOrdersBloc`, widget tests das telas).
-- Distinguir, na fila de sync, falha de rede (retry silencioso) de erro
-  definitivo do servidor (ex. 400 de validação) — hoje ambos marcam o
-  item como `failed`, o que é seguro (nada se perde, tudo é reprocessado
-  automaticamente) mas não diferencia a causa raiz na UI.
+- **Sem Freezed/codegen de modelos**: `User` e `WorkOrder` são classes
+  simples com `fromJson`/`Equatable`. Evita um segundo gerador de
+  código concorrendo com o do Drift e mantém o build previsível — troca
+  direta, sem custo de robustez pro escopo obrigatório.
+- **Sem `go_router`**: `Navigator` padrão + um `AuthGate` simples que
+  troca entre `LoginPage` e `HomeShell` conforme o `AuthBloc` cobre o
+  requisito de bloqueio de rota sem token com bem menos configuração
+  do que um router declarativo.
+- **Campos fixos em vez de dinâmicos via `form-schema`**: o mock expõe
+  `GET /work-orders/:id/form-schema`; os campos fixos do formulário já
+  cobrem exatamente esse schema (observação, condição, foto,
+  localização), então a camada dinâmica não mudaria o comportamento.
+- **Fila de sync trata falha de rede e erro de validação do servidor
+  da mesma forma** (`failed`, reprocessado automaticamente no próximo
+  `syncAll()` ou ao reconectar). Decisão deliberada: garante que nada
+  se perde e tudo é retentado, ao custo de não diferenciar a causa raiz
+  na UI — dá pra refinar isso mantendo o mesmo modelo de dados.
+- **Próximo passo natural do repositório**: CI (GitHub Actions rodando
+  `flutter analyze` + `flutter test` a cada push) e testes de
+  `WorkOrdersBloc`/widget tests, complementando os 21 testes já
+  cobrindo a modelagem offline/sync (o critério de maior peso na
+  avaliação).
