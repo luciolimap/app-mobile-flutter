@@ -1,0 +1,50 @@
+name: mobile
+description: "Orbytis - Mini app de inspecao de campo (desafio tecnico mobile)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_bloc: ^9.1.0
+  equatable: ^2.0.5
+
+  # HTTP
+  dio: ^5.7.0
+
+  # Local database (sync queue + cache)
+  drift: ^2.24.0
+  sqlite3_flutter_libs: ^0.5.27
+  path_provider: ^2.1.5
+  path: ^1.9.0
+
+  # Secure token storage
+  flutter_secure_storage: ^9.2.4
+
+  # Device capabilities
+  geolocator: ^13.0.2
+  image_picker: ^1.1.2
+  connectivity_plus: ^6.1.0
+
+  # Utils
+  uuid: ^4.5.1
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.24.0
+  build_runner: ^2.4.13
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
